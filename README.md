@@ -30,4 +30,4 @@ El análisis de forecasting para series temporales de bolsa es una herramienta f
 1. Clona este repositorio en tu máquina local:
 
 ```bash
-git clone https://github.com/tu_usuario/tu_proyecto.git
+git clone https://github.com/Marcos-Heredia-98/GenerativeAI_TimeSeries.git
