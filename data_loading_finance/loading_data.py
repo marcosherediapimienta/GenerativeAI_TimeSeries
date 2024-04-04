@@ -3,9 +3,12 @@ import pandas as pd
 from datetime import datetime
 import requests
 import warnings
+import logging
+
+logging.getLogger('yfinance').setLevel(logging.CRITICAL)
 
 class LoadingData:
-    def __init__(self, tickers=None, exchanges=None, regions=None, exchange=False, byregion=False):
+    def __init__(self, tickers=None, exchanges=None, regions=None, cryptos=None, byexchange=False, byregion=False, bycrypto=False):
         """
         The function initializes a list of stock tickers, defaulting to the S&P 500 if no tickers are
         provided.
@@ -15,20 +18,22 @@ class LoadingData:
         tickers obtained from a Wikipedia page.
         """
 
-        if exchange and byregion:
-            raise ValueError("Only one of 'exchange' or 'byregion' can be True.")
-        elif not isinstance(exchange, bool) or not isinstance(byregion, bool):
-            raise ValueError("'exchange' and 'byregion' parameters must be boolean values.")
-        elif tickers is not None and (exchange or byregion):
-            raise ValueError("If 'tickers' is provided, 'exchange' and 'byregion' must both be False.")
-        elif tickers is None and  exchanges is None and regions is None and not exchange and not byregion:
+        if (byexchange + byregion + bycrypto) > 1:
+            raise ValueError("Only one of 'byexchange', 'byregion', or 'bycrypto' can be True at a time.")
+        elif not all(isinstance(param, bool) for param in [byexchange, byregion, bycrypto]):
+            raise ValueError("'byexchange', 'byregion', and 'bycrypto' parameters must be boolean values.")
+        elif tickers is not None and (byexchange or byregion or bycrypto):
+            raise ValueError("If 'tickers' are provided, 'byexchange', 'byregion', and 'bycrypto' must all be False.")
+        elif tickers is None and exchanges is None and regions is None and cryptos is None and not byexchange and not byregion and not bycrypto:
             warnings.warn("No data source selected.", UserWarning)
         elif exchanges is not None and regions is not None:
             raise ValueError("Only one of 'exchanges' or 'regions' can be provided.")
-        elif exchanges is not None and not exchange:
-            raise ValueError("If 'exchanges' is provided, 'exchange' must be True.")
+        elif exchanges is not None and not byexchange:
+            raise ValueError("If 'exchanges' is provided, 'byexchange' must be True.")
         elif regions is not None and not byregion:
             raise ValueError("If 'regions' is provided, 'byregion' must be True.")
+        elif cryptos is not None and not bycrypto:
+            raise ValueError("If 'cryptos' is provided, 'bycrypto' must be True.")
 
         if tickers is None:
             headers = {
@@ -43,7 +48,7 @@ class LoadingData:
                 'accept-language': 'en-US,en;q=0.9',
             }
             tickers_list = []
-            if exchange is True:
+            if byexchange is True:
                 if exchanges is not None:
                     if isinstance(exchanges, list):
                         exchange_list = exchanges
@@ -54,11 +59,11 @@ class LoadingData:
                 else:
                     exchange_list = ['nyse', 'nasdaq', 'amex']
                 for exchange in exchange_list:
-                    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=self.__params__('exchange',exchange))
+                    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=self.__params__('byexchange',byexchange))
                     data = r.json()['data']
                     df = pd.DataFrame(data['rows'], columns=data['headers'])
                     if df.empty:
-                        print(f'No data found for the exchange {exchange}.')
+                        print(f'No data found for the byexchange {byexchange}.')
                     else:
                         df_filtered = df[~df['symbol'].str.contains("\.|\^")]
                         tickers_list.extend(df_filtered['symbol'].tolist())
@@ -83,6 +88,17 @@ class LoadingData:
                         df_filtered = df[~df['symbol'].str.contains("\.|\^")]
                         tickers_list.extend(df_filtered['symbol'].tolist())
                 self.tickers = tickers_list
+            elif bycrypto is True:
+                if cryptos is not None:
+                    if isinstance(cryptos, list):
+                        crypto_list = cryptos
+                    elif isinstance(cryptos, str):
+                        crypto_list = [cryptos]
+                    else:
+                        raise ValueError("The 'cryptos' parameter must be a list or a string.")
+                else:
+                    crypto_list = self.__get_crypto_tickers__()
+                self.tickers = crypto_list
         elif isinstance(tickers, list):
             self.tickers = tickers
         else:
@@ -92,7 +108,7 @@ class LoadingData:
         """
         Returns parameters for API request based on the type of parameter needed.
 
-        :param param_type: Type of parameter (ex: 'exchange' or 'region').
+        :param param_type: Type of parameter (ex: 'byexchange' or 'region').
         :param value: Value corresponding to the parameter type.
         :return: Parameters for the API request.
         """
@@ -104,16 +120,22 @@ class LoadingData:
         params = common_params + (specific_param,)
         return params
     
-    def __get_crypto_tickers__():
+    def __get_crypto_tickers__(self):
         url = 'https://api.coingecko.com/api/v3/coins/list'
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            ticker_list = [crypto['symbol'] for crypto in data] 
+            ticker_list_with_usd = [crypto['symbol'].upper() for crypto in data]
+            filtered_tickers = map(self.__filter_tickers__, ticker_list_with_usd)
+            ticker_list_sorted = list(filter(None,sorted(set(filtered_tickers))))
+            ticker_list = [ticker + '-USD' for ticker in ticker_list_sorted]
             return ticker_list
         else:
             print(f"Error: {response.status_code}")
             return []
+        
+    def __filter_tickers__(self,ticker):
+        return ''.join(char if char not in '$.!\|^()@:° ͜ʖ ͡°' else '' for char in ticker)
 
     def get_data(self, start_date=None, end_date=None)->pd.DataFrame:
         """
@@ -145,6 +167,9 @@ class LoadingData:
             print(f"Downloading data for {ticker}...")
             try:
                 data = yf.download(ticker, start=start_date, end=end_date)
+                if data.empty:
+                    print(f"No data found for {ticker} in YahooFinance.")
+                    continue
                 data['ticker'] = ticker
                 all_data.append(data)
             except Exception as e:
@@ -193,5 +218,3 @@ class LoadingData:
         except Exception as e:
             print(f"Could not get info for {self.tickers}. Error: {e}")
             return pd.DataFrame(columns=keys_of_interest)
-
-
