@@ -195,6 +195,3 @@ class LoadingData:
             return pd.DataFrame(columns=keys_of_interest)
 
 
-loader = LoadingData(regions='europe', byregion=True)
-data = loader.get_data()
-
