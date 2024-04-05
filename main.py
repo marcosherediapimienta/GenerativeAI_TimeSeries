@@ -1,4 +1,4 @@
-from time_series_gpt.models.patchtst import patchtst_model
+from time_series_gpt.models.transformers.patchtst import patchtst_model
 from data_loading_finance.loading_data import LoadingData
 
 # Load the data
