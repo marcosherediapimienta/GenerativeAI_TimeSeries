@@ -25,7 +25,7 @@ class LoadingData:
         elif tickers is not None and (byexchange or byregion or bycrypto):
             raise ValueError("If 'tickers' are provided, 'byexchange', 'byregion', and 'bycrypto' must all be False.")
         elif tickers is None and exchanges is None and regions is None and cryptos is None and not byexchange and not byregion and not bycrypto:
-            warnings.warn("No data source selected.", UserWarning)
+            raise ValueError("No data source selected. Please provide tickers, exchanges, regions, or cryptos.")
         elif exchanges is not None and regions is not None:
             raise ValueError("Only one of 'exchanges' or 'regions' can be provided.")
         elif exchanges is not None and not byexchange:

@@ -1,15 +1,23 @@
-from time_series_gpt.models.transformers.patchtst import patchtst_model
 from data_loading_finance.loading_data import LoadingData
+import matplotlib.pyplot as plt
 
 # Load the data
-loader = LoadingData(tickers=['AAPL'])
+loader = LoadingData(tickers='BTC-USD')
 ts = loader.get_data()
+info = loader.get_info_ticker()
 
-# Create a PatchTST model
-model = patchtst_model(horizon=7, input_size=1, freq='D')
-model.fit(ts)
-prediction = model.predict()
-model.plot()
+
+ts['unique_id'] = 'BTC-USD'
+ts = ts.rename(columns={'Date': 'ds', 'Adj Close': 'y'})
+ts = ts[['unique_id','ds', 'y']]
+
+print(info)
+print(ts.head())
+
+plt.plot(ts['ds'], ts['y'])
+plt.show()
+
+
 
 
 
