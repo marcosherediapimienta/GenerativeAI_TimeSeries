@@ -8,7 +8,8 @@ import logging
 logging.getLogger('yfinance').setLevel(logging.CRITICAL)
 
 class LoadingData:
-    def __init__(self, tickers=None, exchanges=None, regions=None, cryptos=None, byexchange=False, byregion=False, bycrypto=False):
+    def __init__(self, tickers=None, exchanges=None, regions=None, cryptos=None, sectors=None,\
+                 byexchange=False, byregion=False, bycrypto=False, bysector=False):
         """
         The function initializes a list of stock tickers, defaulting to the S&P 500 if no tickers are
         provided.
@@ -18,35 +19,33 @@ class LoadingData:
         tickers obtained from a Wikipedia page.
         """
 
-        if (byexchange + byregion + bycrypto) > 1:
-            raise ValueError("Only one of 'byexchange', 'byregion', or 'bycrypto' can be True at a time.")
-        elif not all(isinstance(param, bool) for param in [byexchange, byregion, bycrypto]):
-            raise ValueError("'byexchange', 'byregion', and 'bycrypto' parameters must be boolean values.")
-        elif tickers is not None and (byexchange or byregion or bycrypto):
-            raise ValueError("If 'tickers' are provided, 'byexchange', 'byregion', and 'bycrypto' must all be False.")
-        elif tickers is None and exchanges is None and regions is None and cryptos is None and not byexchange and not byregion and not bycrypto:
-            raise ValueError("No data source selected. Please provide tickers, exchanges, regions, or cryptos.")
-        elif exchanges is not None and regions is not None:
-            raise ValueError("Only one of 'exchanges' or 'regions' can be provided.")
+        if (byexchange + byregion + bycrypto + bysector) > 1:
+            raise ValueError("Only one of 'byexchange', 'byregion', 'bycrypto', or 'bysector' can be True at a time.")
+        elif not all(isinstance(param, bool) for param in [byexchange, byregion, bycrypto, bysector]):
+            raise ValueError("'byexchange', 'byregion', 'bycrypto', or 'bysector' parameters must be boolean values.")
+        elif tickers is not None and (byexchange or byregion or bycrypto or bysector):
+            raise ValueError("If 'tickers' are provided, 'byexchange', 'byregion', 'bycrypto', or 'bysector' must all be False.")
+        elif tickers is None and exchanges is None and regions is None and cryptos is None and sectors is None \
+            and not byexchange and not byregion and not bycrypto and not bysector:
+            raise ValueError("No data source selected. Please provide tickers, exchanges, regions, cryptos, or sectors.")
+        elif exchanges is not None and (regions is not None or cryptos is not None or sectors is not None):
+            raise ValueError("Only one of 'exchanges' or 'regions' or 'cryptos' or 'sectors' can be provided.")
+        elif regions is not None and (exchanges is not None or cryptos is not None or sectors is not None):
+            raise ValueError("Only one of 'exchanges' or 'regions' or 'cryptos' or 'sectors' can be provided.")
+        elif cryptos is not None and (exchanges is not None or regions is not None or sectors is not None):
+            raise ValueError("Only one of 'exchanges' or 'regions' or 'cryptos' or 'sectors' can be provided.")
+        elif sectors is not None and (exchanges is not None or regions is not None or cryptos is not None):
+            raise ValueError("Only one of 'exchanges' or 'regions' or 'cryptos' or 'sectors' can be provided.")
         elif exchanges is not None and not byexchange:
             raise ValueError("If 'exchanges' is provided, 'byexchange' must be True.")
         elif regions is not None and not byregion:
             raise ValueError("If 'regions' is provided, 'byregion' must be True.")
         elif cryptos is not None and not bycrypto:
             raise ValueError("If 'cryptos' is provided, 'bycrypto' must be True.")
+        elif sectors is not None and not bysector:
+            raise ValueError("If 'sectors' is provided, 'bysector' must be True.")
 
         if tickers is None:
-            headers = {
-                'authority': 'api.nasdaq.com',
-                'accept': 'application/json, text/plain, */*',
-                'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
-                'origin': 'https://www.nasdaq.com',
-                'sec-fetch-site': 'same-site',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-dest': 'empty',
-                'referer': 'https://www.nasdaq.com/',
-                'accept-language': 'en-US,en;q=0.9',
-            }
             tickers_list = []
             if byexchange is True:
                 if exchanges is not None:
@@ -59,9 +58,7 @@ class LoadingData:
                 else:
                     exchange_list = ['nyse', 'nasdaq', 'amex']
                 for exchange in exchange_list:
-                    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=self.__params__('byexchange',byexchange))
-                    data = r.json()['data']
-                    df = pd.DataFrame(data['rows'], columns=data['headers'])
+                    df = self.__request_nasdaq__('byexchange',exchange)
                     if df.empty:
                         print(f'No data found for the byexchange {byexchange}.')
                     else:
@@ -79,9 +76,7 @@ class LoadingData:
                 else:
                     region_list = ['AFRICA','EUROPE','ASIA','SOUTH AMERICA','NORTH AMERICA']
                 for region in region_list:
-                    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=self.__params__('region',region))
-                    data = r.json()['data']
-                    df = pd.DataFrame(data['rows'], columns=data['headers'])
+                    df = self.__request_nasdaq__('region',region)
                     if df.empty:
                         print(f'No data found for the region {region}.')
                     else:
@@ -99,10 +94,48 @@ class LoadingData:
                 else:
                     crypto_list = self.__get_crypto_tickers__()
                 self.tickers = crypto_list
+            elif bysector is True:
+                if sectors is not None:
+                    if isinstance(sectors, list):
+                        sector_list = sectors
+                    elif isinstance(sectors, str):
+                        sector_list = [sectors]
+                    else:
+                        raise ValueError("The 'sectors' parameter must be a list or a string.")
+                else:
+                    sector_list = ['Basic Materials','Consumer Discretionary', 'Energy','Industrials',
+                                   'Real Estate','Technology','Utilities', 'Consumer Staples', 'Health Care', 'Telecommunication']
+                for sector in sector_list:
+                    df = self.__request_nasdaq__('sector',sector)
+                    if df.empty:
+                        print(f'No data found for the sector {sector}.')
+                    else:
+                        df_filtered = df[~df['symbol'].str.contains("\.|\^")]
+                        tickers_list.extend(df_filtered['symbol'].tolist())
+                self.tickers = tickers_list
         elif isinstance(tickers, list):
             self.tickers = tickers
         else:
             self.tickers = [tickers]
+    
+    def __request_nasdaq__(self, param, id_list)->pd.DataFrame:
+            
+        headers = {
+                'authority': 'api.nasdaq.com',
+                'accept': 'application/json, text/plain, */*',
+                'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
+                'origin': 'https://www.nasdaq.com',
+                'sec-fetch-site': 'same-site',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-dest': 'empty',
+                'referer': 'https://www.nasdaq.com/',
+                'accept-language': 'en-US,en;q=0.9',
+        }
+
+        r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=self.__params__(f'{param}',id_list))
+        data = r.json()['data']
+        df = pd.DataFrame(data['rows'], columns=data['headers'])
+        return df
 
     def __params__(self, param_type, value):
         """
