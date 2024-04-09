@@ -210,7 +210,7 @@ class LoadingData:
         if all_data:
             combined_data = pd.concat(all_data)
             combined_data.reset_index(inplace=True)
-            combined_data = combined_data.sort_values(['Date', 'ticker'], ascending=False).reset_index(drop=True)
+            combined_data = combined_data.sort_values(['ticker','Date'], ascending=False).reset_index(drop=True)
             return combined_data
         else:
             return pd.DataFrame()
