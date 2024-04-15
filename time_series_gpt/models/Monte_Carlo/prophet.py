@@ -104,17 +104,17 @@ class ProphetMeta:
             
             print(f"Finished processing {unique_id}.")
 
-    def predict(self, unique_id: str, periods: int, freq: str = 'D'):
+    def predict(self, unique_id: str, horizon: int, freq: str = 'D')-> pd.DataFrame:
         """
         Generates future dates and predicts values for them using the trained Prophet self.model for a specific unique_id.
         """
         model = self.models.get(unique_id)
         if model:
-            future = model.make_future_dataframe(periods=periods, freq=freq)
+            future = model.make_future_dataframe(periods=horizon, freq=freq)
             forecast = model.predict(future)
             return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
         else:
-            print(f"No self.model found for unique_id: {unique_id}")
+            print(f"No model found for unique_id: {unique_id}")
             return None
 
     def get_results(self, unique_id: str):
