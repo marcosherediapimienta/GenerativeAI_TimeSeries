@@ -8,9 +8,9 @@ import pandas as pd
 import time
 
 # Load the data
-tickers = ['GOOG','AAPL']
+tickers = ['GOOG']
 loader = LoadingData(tickers=tickers)
-ts = loader.get_data()
+ts = loader.get_data(start_date='2021-01-01', end_date='2022-01-01')
 #info = loader.get_info_ticker()
 
 ts_tools = tools()
@@ -51,7 +51,7 @@ if chronos:
 if patchtst:
     start_time = time.time()
 
-    model = patchtst_forecaster(evaluation=True, freq=freq, horizon=horizon)
+    model = patchtst_forecaster(evaluation=False, auto=True, input_size=7, freq=freq, horizon=horizon)
     model.fit(ts)
     ts_forecast = model.predict() 
 

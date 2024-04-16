@@ -39,7 +39,12 @@ class patchtst_forecaster:
             ts_cv = ts_cv.reset_index().rename(columns={'index':'unique_id'})
             self.ts_evaluation = evaluate(ts_cv.loc[:,ts_cv.columns !='cutoff'], metrics=[smape, mape])
             self.ts_evaluation['best_model'] = self.ts_evaluation.drop(columns=['metric','unique_id']).idxmin(axis=1)
-            self.ts_evaluation['accuracy'] = ((1-self.ts_evaluation['sampe'])*100).round(2)
+            
+            if 'AutoPatchTST' in self.ts_evaluation.columns:
+                self.ts_evaluation['accuracy'] = ((1-self.ts_evaluation['AutoPatchTST'])*100).round(2)
+            elif 'PatchTST' in self.ts_evaluation.columns: 
+                self.ts_evaluation['accuracy'] = ((1-self.ts_evaluation['PatchTST'])*100).round(2)
+
             print(self.ts_evaluation)
         
         self.nf.fit(ts)
