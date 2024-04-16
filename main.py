@@ -51,7 +51,7 @@ if chronos:
 if patchtst:
     start_time = time.time()
 
-    model = patchtst_forecaster(evaluation=False, auto=True, input_size=7, freq=freq, horizon=horizon)
+    model = patchtst_forecaster(evaluation=False, auto=False, input_size=7, freq=freq, horizon=horizon)
     model.fit(ts)
     ts_forecast = model.predict() 
 
@@ -63,4 +63,3 @@ if patchtst:
 # Plot the forecast
 if not ts_forecast.empty:
     ts_tools.plot_forecast(ts_forecast)
-

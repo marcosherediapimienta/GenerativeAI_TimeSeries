@@ -50,8 +50,12 @@ class patchtst_forecaster:
         self.nf.fit(ts)
         
     def predict(self) -> pd.DataFrame: 
-            result = self.nf.predict(self.horizon)
+            result = self.nf.predict()
             result = result.reset_index()
+            if 'PatchTST' in result.columns:
+                result = result.rename(columns={'PatchTST':'yhat'})
+            elif 'AutoPatchTST' in result.columns:
+                result = result.rename(columns={'AutoPatchTST':'yhat'})
             return result 
 
 
