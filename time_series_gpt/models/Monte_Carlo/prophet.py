@@ -6,7 +6,7 @@ from prophet.diagnostics import cross_validation, performance_metrics
 import logging
 
 logging.getLogger("prophet").setLevel(logging.ERROR)
-logging.getLogger("cmdstanpy").disabled = True
+logging.getLogger("cmdstanpy").setLevel(logging.ERROR)
 
 class ProphetMeta:
     def __init__(self, ts_data: pd.DataFrame, train_ratio: float = 0.7, validation_ratio: float = 0.2):
@@ -41,9 +41,9 @@ class ProphetMeta:
         """
         Trains the Prophet self.model and evaluates its performance for each unique_id.
         """
-        unique_ids = self.ts_data['unique_id'].unique()
+        self.unique_ids = self.ts_data['unique_id'].unique()
 
-        for unique_id in unique_ids:
+        for unique_id in self.unique_ids:
             print(f"Processing {unique_id}...")
             ts_data_individual = self.ts_data[self.ts_data['unique_id'] == unique_id]
             split_data = self.__split_data__(ts_data_individual)
@@ -104,21 +104,27 @@ class ProphetMeta:
             
             print(f"Finished processing {unique_id}.")
 
-    def predict(self, unique_id: str, horizon: int, freq: str = 'D')-> pd.DataFrame:
+    def predict(self, horizon: int, freq: str = 'D')-> pd.DataFrame:
         """
         Generates future dates and predicts values for them using the trained Prophet self.model for a specific unique_id.
         """
-        model = self.models.get(unique_id)
-        if model:
-            future = model.make_future_dataframe(periods=horizon, freq=freq)
-            forecast = model.predict(future)
-            return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
-        else:
-            print(f"No model found for unique_id: {unique_id}")
-            return None
+        ts_forecast = pd.DataFrame(columns=['unique_id','ds', 'yhat', 'yhat_lower', 'yhat_upper'])
+        for unique_id in self.unique_ids:
+            model = self.models.get(unique_id)
+            if model:
+                future = model.make_future_dataframe(periods=horizon, freq=freq)
+                forecast = model.predict(future)
+                forecast['unique_id'] = unique_id
+                ts_forecast = pd.concat([ts_forecast, forecast[['unique_id','ds', 'yhat', 'yhat_lower', 'yhat_upper']]])
+            else:
+                print(f"No model found for unique_id: {unique_id}")
+        return ts_forecast
 
-    def get_results(self, unique_id: str):
+    def get_results(self):
         """
         Returns the evaluation results for a specific unique_id.
         """
-        return self.results.get(unique_id, "No results found for this unique_id.")
+        ts_results = pd.DataFrame(columns=['unique_id', 'SMAPE Error', 'MAPE Error', 'Accuracy'])
+        for unique_id in self.unique_ids:
+            ts_results = pd.concat([ts_results, pd.DataFrame([{'unique_id': unique_id, **self.results[unique_id]}])])
+        return ts_results

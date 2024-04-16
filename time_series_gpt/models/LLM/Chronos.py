@@ -97,6 +97,12 @@ class Chronos:
 
             context = torch.tensor(ts_chronos[self.num_column].values)
 
+            if self.prediction_length > 64:
+               print(f'We recommend keeping prediction length <= 64. '
+                    f'The quality of longer predictions may degrade since the model is not optimized for it. '
+                    f'Your horizon is {self.prediction_length}.')
+
+
             self.forecast = pipeline.predict(
                 context,
                 self.prediction_length,
@@ -111,8 +117,8 @@ class Chronos:
             
             if self.evaluation:
                 real_series = split_data['test_data'][self.num_column]
-                mape_score = self.__mape__(real_series, forecast_np)
-                smape_score = self.__smape__(real_series, forecast_np)
+                mape_score = self.__mape__(real_series, forecast_np, self.freq)
+                smape_score = self.__smape__(real_series, forecast_np, self.freq)
 
                 self.mape_scores[unique_id] = mape_score
                 self.smape_scores[unique_id] = smape_score
@@ -124,22 +130,49 @@ class Chronos:
                 ts_results = pd.DataFrame({'unique_id':unique_id,'ds': self.forecast_dates, 'yhat':forecast_np})
             
             ts_forecast.append(ts_results)
+
+            print(f'Finished processing {unique_id}.')
         
         ts_foreast_client = pd.concat(ts_forecast, ignore_index=True)
 
+        print('Finished processing all unique ids.')
+
         return ts_foreast_client
     
-    def __mape__(self, real:pd.Series, forecast:pd.Series) -> float:
+    def __mape__(self, real: pd.Series, forecast: pd.Series, freq:str='D') -> float:
 
-        real, forecast = np.array(real), np.array(forecast)
-        mape = np.mean(np.abs((real - forecast) / real)) * 100
+        if freq == 'D':
+            mape_values = []
+            for i in range(0, len(real), 7):
+                segment_real = np.array(real[i:i+7])
+                segment_forecast = np.array(forecast[i:i+7])
+                valid_mask = segment_real != 0
+                if np.any(valid_mask):
+                    mape_segment = np.mean(np.abs((segment_real[valid_mask] - segment_forecast[valid_mask]) / segment_real[valid_mask])) * 100
+                    mape_values.append(mape_segment)
+                mape = np.mean(mape_values)
+        else:
+            real, forecast = np.array(real), np.array(forecast)
+            mape = np.mean(np.abs((real - forecast) / real)) * 100
 
         return mape
-    
-    def __smape__(self, real:pd.Series, forecast:pd.Series) -> float:
 
-        real, forecast = np.array(real), np.array(forecast)
-        smape = 100/len(real) * np.sum(2 * np.abs(forecast - real) / (np.abs(real) + np.abs(forecast)))
+    def __smape__(self, real: pd.Series, forecast: pd.Series, freq:str='D') -> float:
+
+        if freq == 'D':
+            smape_values = []
+            for i in range(0, len(real), 7):
+                segment_real = np.array(real[i:i+7])
+                segment_forecast = np.array(forecast[i:i+7])
+                denominator = (np.abs(segment_real) + np.abs(segment_forecast))
+                valid_mask = denominator != 0 
+                if np.any(valid_mask):
+                    smape_segment = 100 / len(segment_real[valid_mask]) * np.sum(2 * np.abs(segment_forecast[valid_mask] - segment_real[valid_mask]) / denominator[valid_mask])
+                    smape_values.append(smape_segment)
+                smape = np.mean(smape_values)
+        else:
+            real, forecast = np.array(real), np.array(forecast)
+            smape = 100/len(real) * np.sum(2 * np.abs(forecast - real) / (np.abs(real) + np.abs(forecast)))
 
         return smape
 
