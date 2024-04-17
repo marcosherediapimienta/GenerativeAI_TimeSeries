@@ -46,7 +46,7 @@ class tools:
             axs = [axs]
         
         for i, unique_id in enumerate(unique_ids):
-            subset = ts[ts['unique_id'] == unique_id]  
+            subset = ts[ts['unique_id'] == unique_id]
             axs[i].plot(subset['ds'], subset['y'], label=f"ID: {unique_id}")  
             axs[i].legend(loc="best")  
             axs[i].set_ylabel('y')  
@@ -65,14 +65,15 @@ class tools:
             axs = [axs]
         
         for i, unique_id in enumerate(unique_ids):
-            subset = ts[ts['unique_id'] == unique_id]  
+            subset = ts[ts['unique_id'] == unique_id] 
+            subset['ds'] = pd.to_datetime(subset['ds']).dt.strftime('%Y-%m-%d')
             axs[i].plot(subset['ds'], subset['yhat'], label=f"ID: {unique_id}")
             if 'y' in subset.columns:
                 axs[i].plot(subset['ds'], subset['y'], label=f"Actual ID: {unique_id}")
             if 'yhat_lower' in subset.columns and 'yhat_upper' in subset.columns:
                 axs[i].fill_between(subset['ds'], subset['yhat_lower'], subset['yhat_upper'], alpha=0.2)
             axs[i].legend(loc="best")
-            axs[i].set_xticklabels(subset['ds'], rotation=45)
+            axs[i].set_xticklabels(subset['ds'], rotation=90)
 
         plt.xlabel('ds') 
         plt.ylabel('Forecasted y') 

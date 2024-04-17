@@ -11,14 +11,14 @@ import time
 tickers = ['GOOG']
 loader = LoadingData(tickers=tickers)
 ts = loader.get_data(start_date='2021-01-01', end_date='2022-01-01')
-#info = loader.get_info_ticker()
+info = loader.get_info_ticker()
 
 ts_tools = tools()
 ts = ts_tools.ts_prepartion(ts, 'Date', 'Adj Close')
-# ts_tools.plot_ts(ts)
+ts_tools.plot_ts(ts)
 
 chronos = False
-patchtst = True
+patchtst = False
 prophet = False
 
 horizon= 30
