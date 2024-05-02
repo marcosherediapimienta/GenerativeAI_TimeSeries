@@ -12,7 +12,7 @@ El análisis de forecasting para series temporales financieras es una herramient
   
 - **Análisis de Prophet**: Se utilizará el modelo Prophet, desarrollado por Facebook, para realizar pronósticos precisos sobre las series temporales de bolsa.
 
-- **Modelos Generativos LLM**: Se explorarán y analizarán modelos generativos, como los Modelos Lineales Locales (LLM), para entender y predecir el comportamiento de las series temporales financieras.
+- **Modelos Generativos LLM**: Se explorarán y analizarán modelos generativos (LLM), para entender y predecir el comportamiento de las series temporales financieras.
 
 ## Requisitos
 
