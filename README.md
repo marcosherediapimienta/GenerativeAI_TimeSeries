@@ -34,6 +34,7 @@ Características Principales:
 - Modelo basado en redes neuronales recurrentes (RNN).
 - Capacidad para capturar dependencias temporales complejas entre múltiples series.
 
+![Texto Alternativo](Image/Chronos.png)
 
 
 **PatchTST:**
@@ -45,8 +46,7 @@ Características Principales:
 - Enfoque innovador que utiliza transformaciones en el dominio del tiempo.
 - Capacidad para capturar patrones no lineales y mejorar la precisión predictiva.
 
-
-
+![Texto Alternativo](Image/PatchTST.png)
 
 
 ## Requisitos
