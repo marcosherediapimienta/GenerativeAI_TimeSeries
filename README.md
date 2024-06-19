@@ -34,7 +34,6 @@ Características Principales:
 - Modelo basado en redes neuronales recurrentes (RNN).
 - Capacidad para capturar dependencias temporales complejas entre múltiples series.
 
-![Texto Alternativo](/Users/marcosherediapimienta/Library/Mobile Documents/com~apple~CloudDocs/Documents/Máster de Matemàtiques per els Instruments Financers/TFM/Images/Arquitectura Chronos.png)
 
 
 **PatchTST:**
@@ -45,8 +44,7 @@ Características Principales:
 
 - Enfoque innovador que utiliza transformaciones en el dominio del tiempo.
 - Capacidad para capturar patrones no lineales y mejorar la precisión predictiva.
-- 
-![Texto Alternativo](/Users/marcosherediapimienta/Library/Mobile Documents/com~apple~CloudDocs/Documents/Máster de Matemàtiques per els Instruments Financers/TFM/Images/Arquitectura PatchTST.png)
+
 
 
 
