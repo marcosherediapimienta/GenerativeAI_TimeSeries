@@ -1,18 +1,55 @@
-# Proyecto de Análisis de Forecasting para Series Temporales Financieras
+# Análisis de Forecasting para Series Temporales Financieras
 
-Este proyecto tiene como objetivo realizar análisis de forecasting para series temporales financieras. Se utilizarán diversas técnicas y modelos para predecir el comportamiento futuro de los precios de acciones en el mercado de valores.
 
 ## Descripción del Proyecto
 
-El análisis de forecasting para series temporales financieras es una herramienta fundamental para los inversores y operadores del sector financiero. Este proyecto se enfoca en utilizar diferentes métodos y modelos para predecir los precios futuros de los stocks, lo que puede ayudar a tener mayor información de como se comporta el mercado y permitir tomar decisiones más consistentes.
 
-### Funcionalidades Principales
+### Modelos
 
-- **Análisis de AutoArima**: Se empleará el modelo AutoArima para realizar predicciones sobre las series temporales de los precios de las acciones.
-  
-- **Análisis de Prophet**: Se utilizará el modelo Prophet, desarrollado por Facebook, para realizar pronósticos precisos sobre las series temporales de bolsa.
+**AutoArima:**
 
-- **Modelos Generativos LLM**: Se explorarán y analizarán modelos generativos (LLM), para entender y predecir el comportamiento de las series temporales financieras.
+AutoArima es una implementación automática del modelo ARIMA (Autoregressive Integrated Moving Average). ARIMA es ampliamente utilizado para modelar y predecir series temporales, especialmente aquellas que muestran patrones estacionales y tendencias. AutoArima selecciona automáticamente los parámetros óptimos del modelo ARIMA mediante métodos estadísticos.
+
+Características Principales:
+
+- Identificación automática de los parámetros p, d y q del modelo ARIMA.
+- Manejo automático de estacionalidad mediante diferenciación estacional.
+
+
+**Prophet:**
+
+Prophet es un modelo de forecasting desarrollado por Facebook que está diseñado específicamente para manejar series temporales que exhiben estacionalidad diaria, semanal o anual, así como efectos de días festivos. Utiliza un modelo aditivo donde las tendencias no lineales se ajustan a los efectos estacionales y las vacaciones.
+
+Características Principales:
+
+- Capacidad para manejar datos faltantes y cambios en la tendencia.
+- Modelo intuitivo con ajuste automático de efectos estacionales y vacaciones.
+
+**Chronos:**
+
+Chronos es un modelo avanzado de series temporales desarrollado por Uber AI Labs. Está diseñado para manejar datos multivariados y capturar relaciones complejas entre múltiples series temporales. Chronos utiliza una arquitectura de redes neuronales recurrentes (RNN) para aprender patrones secuenciales y temporales.
+
+Características Principales:
+
+- Modelo basado en redes neuronales recurrentes (RNN).
+- Capacidad para capturar dependencias temporales complejas entre múltiples series.
+
+![Texto Alternativo](/Users/marcosherediapimienta/Library/Mobile Documents/com~apple~CloudDocs/Documents/Máster de Matemàtiques per els Instruments Financers/TFM/Images/Arquitectura Chronos.png)
+
+
+**PatchTST:**
+
+PatchTST es un enfoque reciente para el forecasting de series temporales que se centra en transformaciones en el dominio del tiempo. Este modelo busca mejorar la capacidad predictiva al aplicar transformaciones no lineales a las series temporales originales.
+
+Características Principales:
+
+- Enfoque innovador que utiliza transformaciones en el dominio del tiempo.
+- Capacidad para capturar patrones no lineales y mejorar la precisión predictiva.
+- 
+![Texto Alternativo](/Users/marcosherediapimienta/Library/Mobile Documents/com~apple~CloudDocs/Documents/Máster de Matemàtiques per els Instruments Financers/TFM/Images/Arquitectura PatchTST.png)
+
+
+
 
 ## Requisitos
 
