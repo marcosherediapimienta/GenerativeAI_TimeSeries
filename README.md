@@ -9,6 +9,8 @@
 
 **Series temporales:** 50 series temporales de las empresas más importantes del indice NASDAQ 100.
 
+**Horizonte temporal:** 
+
 **Frecuencia de Datos:** Datos diarios, semanales y mensuales.
 
 
