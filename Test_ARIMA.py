@@ -122,16 +122,13 @@ axs[1, 1].set_title("Autocorrelation of Residuals")
 plt.tight_layout()
 plt.show()
 
-Y_hat_df = sf.forecast(horizon, fitted=True)
-Y_hat_df.head()
+forecast_df = sf.forecast(h=28, level = [95]) 
+forecast_df
 
-values=sf.forecast_fitted_values()
-values
+df_plot=pd.concat([df_selected, forecast_df]).set_index('ds').tail(75)
+df_plot
 
-sf.forecast(h=28, level=[95])
-
-Y_hat_df=Y_hat_df.reset_index()
-Y_hat_df
+# Asumiendo que df_plot contiene las columnas necesarias y está preparado para trazar
 
 fig, ax = plt.subplots(1, 1, figsize=(20, 8))
 
@@ -139,18 +136,11 @@ fig, ax = plt.subplots(1, 1, figsize=(20, 8))
 plt.plot(df_plot.index, df_plot['y'], 'k--', label="Actual", linewidth=2)
 plt.plot(df_plot.index, df_plot['AutoARIMA'], 'b-', label="AutoARIMA Forecast", linewidth=2, color="red")
 
-# Rellenar las bandas de intervalo de confianza del 80% y 95%
-ax.fill_between(df_plot.index, 
-                df_plot['AutoARIMA-lo-80'], 
-                df_plot['AutoARIMA-hi-80'],
-                alpha=.20,
-                color='lime',
-                label='AutoARIMA 80% Confidence Interval')
 ax.fill_between(df_plot.index, 
                 df_plot['AutoARIMA-lo-95'], 
                 df_plot['AutoARIMA-hi-95'],
                 alpha=.2,
-                color='white',
+                color='red',
                 label='AutoARIMA 95% Confidence Interval')
 
 # Configurar título y etiquetas de los ejes
@@ -167,3 +157,5 @@ ax.grid(True)
 # Mostrar el gráfico
 plt.tight_layout()
 plt.show()
+
+
