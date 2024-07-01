@@ -1,20 +1,15 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsforecast import StatsForecast
-from statsforecast.models import AutoARIMA
+from statsforecast.models import AutoETS, AutoARIMA, AutoCES, AutoTheta
+from time import time
 import seaborn as sns
 from scipy import stats
 import warnings
 
-# Ignorar advertencias
-warnings.filterwarnings("ignore")
-
-# Emitir una advertencia personalizada
-warnings.warn("Este es un mensaje de advertencia.")
-
-# Carga y preparación de datos
 df = pd.read_csv("/Users/marcosherediapimienta/Library/Mobile Documents/com~apple~CloudDocs/Documents/Máster de Matemàtiques per els Instruments Financers/TFM/Time_Series/archive/Top10-2021-2024-1d.csv")
 
 df_selected = df[['Timestamp', 'BTCUSDT']]
@@ -25,26 +20,14 @@ df_selected["unique_id"] = "1"
 df_selected.columns = ["ds", "y", "unique_id"]
 
 df_selected["ds"] = pd.to_datetime(df_selected["ds"])
+df_selected
 
-# Análisis de autocorrelación y descomposición estacional
-fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
-plot_acf(df_selected["y"], lags=60, ax=axs[0], color="blue")
-axs[0].set_title("Autocorrelación")
-plot_pacf(df_selected["y"], lags=60, ax=axs[1], color="blue")
-axs[1].set_title('Autocorrelación parcial')
-
-decomposition = seasonal_decompose(df_selected['y'], model='additive', period=12)
-decomposition.plot()
-plt.show()
-
-# Separación de los datos en conjuntos de entrenamiento y prueba
 Y_train_df = df_selected[df_selected.ds <= '2024-05-01']
 Y_test_df = df_selected[df_selected.ds > '2024-05-01']
 
-# Configuración y ajuste del modelo AutoARIMA
 season_length = 12
 horizon = len(Y_test_df)
-models = [AutoARIMA(season_length=season_length)]
+models = [AutoETS(season_length=season_length), AutoARIMA(season_length=season_length), AutoCES(season_length=season_length), AutoTheta(season_length=season_length)]
 
 sf = StatsForecast(df=Y_train_df,
                    models=models,
@@ -53,52 +36,52 @@ sf = StatsForecast(df=Y_train_df,
 
 sf.fit()
 
-# Análisis del modelo ajustado y sus residuos
-result = sf.fitted_[0,0].model_
-print(result.keys())
-print(result['arma'])
+horizon = 28
+levels = [99] 
 
-residual = pd.DataFrame(result.get("residuals"), columns=["Residuos del Modelo"])
+forecast_df = sf.forecast(h=horizon, level = levels, fitted = True)
+forecast_df = forecast_df.reset_index()
+forecast_df.head()
 
-fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 10))
-residual['Residuos del Modelo'].plot(ax=axs[0, 0])
-axs[0, 0].set_title("Residuos")
-axs[0, 0].set_xlabel('Tiempo')
+# Asegurarse de que la columna 'ds' está presente en ambos DataFrames
+if 'ds' not in Y_test_df.columns:
+    Y_test_df = Y_test_df.reset_index().rename(columns={'index': 'ds'})
+if 'ds' not in forecast_df.columns:
+    forecast_df = forecast_df.reset_index().rename(columns={'index': 'ds'})
 
-sns.histplot(residual['Residuos del Modelo'], ax=axs[0, 1])
-axs[0, 1].set_title("Densidad - Residuos")
+# Configurar los índices para los cálculos de error
+Y_test_df = Y_test_df.set_index('ds')
+forecast_df = forecast_df.set_index('ds')
 
-stats.probplot(residual['Residuos del Modelo'], dist="norm", plot=axs[1, 0])
-axs[1, 0].set_title('Gráfico Q-Q')
+# Asegurarse de que las fechas en los índices coincidan
+Y_test_df = Y_test_df.loc[forecast_df.index]
 
-plot_acf(residual['Residuos del Modelo'], lags=35, ax=axs[1, 1], color="blue")
-axs[1, 1].set_title("Autocorrelación de Residuos")
-plt.tight_layout()
-plt.show()
+# Definir funciones para calcular MAPE y sMAPE
+def mean_absolute_percentage_error(y_true, y_pred):
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-# Generación y visualización de previsiones
-Y_hat_df = sf.forecast(horizon, fitted=True)
-print(Y_hat_df.head())
+def symmetric_mean_absolute_percentage_error(y_true, y_pred):
+    return np.mean(2 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred))) * 100
 
-forecast_df = sf.forecast(h=28, level=[95])
+# Inicializar diccionarios para almacenar los errores de cada modelo
+mape_results = {}
+smape_results = {}
 
-df_plot = pd.concat([df_selected, forecast_df]).set_index('ds').tail(75)
+# Lista de nombres de los modelos
+model_names = ['AutoETS','AutoARIMA', 'CES', 'AutoTheta']
 
-fig, ax = plt.subplots(1, 1, figsize=(20, 8))
-plt.plot(df_plot.index, df_plot['y'], 'k--', label="Actual", linewidth=2)
-plt.plot(df_plot.index, df_plot['AutoARIMA'], label="Previsión AutoARIMA", linewidth=2, color="red")
-ax.fill_between(df_plot.index,
-                df_plot['AutoARIMA-lo-95'],
-                df_plot['AutoARIMA-hi-95'],
-                alpha=.2,
-                color='red',
-                label='Intervalo de Confianza 95%')
+# Calcular MAPE y sMAPE para cada modelo
+for model_name in model_names:
+    y_pred = forecast_df[model_name].values
+    y_true = Y_test_df['y'].values
+    mape_results[model_name] = mean_absolute_percentage_error(y_true, y_pred)
+    smape_results[model_name] = symmetric_mean_absolute_percentage_error(y_true, y_pred)
 
-ax.set_title('Previsión diaria del precio de Bitcoin', fontsize=20)
-ax.set_ylabel('Precio BTC', fontsize=15)
-ax.set_xlabel('Fecha', fontsize=15)
-ax.legend(prop={'size': 12})
-ax.grid(True)
+# Mostrar los resultados
+print("MAPE results:")
+for model, mape in mape_results.items():
+    print(f"{model}: {mape:.2f}%")
 
-plt.tight_layout()
-plt.show()
+print("\nSMAPE results:")
+for model, smape in smape_results.items():
+    print(f"{model}: {smape:.2f}%")
