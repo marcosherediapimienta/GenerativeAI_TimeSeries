@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
+from scipy import stats
 import numpy as np
-import scipy
+import seaborn as sns
+
 
 n = 500
 fig, ax = plt.subplots(1,2, figsize=(16, 6), gridspec_kw={'width_ratios':[3, 1]})
