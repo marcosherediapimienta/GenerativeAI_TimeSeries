@@ -7,7 +7,7 @@ n = 500
 fig, ax = plt.subplots(1,2, figsize=(16, 6), gridspec_kw={'width_ratios':[3, 1]})
 eps = np.random.normal(size=n)
 ax[0].plot(eps)
-sns.distplot(eps, ax=ax[1])
+sns.histplot(eps, ax=ax[1])
 
 def lag_view(x, order):
     """
