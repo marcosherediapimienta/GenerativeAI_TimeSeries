@@ -3,6 +3,12 @@ import seaborn as sns
 import numpy as np
 import scipy
 
+n = 500
+fig, ax = plt.subplots(1,2, figsize=(16, 6), gridspec_kw={'width_ratios':[3, 1]})
+eps = np.random.normal(size=n)
+ax[0].plot(eps)
+sns.distplot(eps, ax=ax[1])
+
 def lag_view(x, order):
     """
     For every value X_i create a row that lags k values: [X_i-1, X_i-2, ... X_i-k]
@@ -38,7 +44,7 @@ for i in range(0, 11, 5):
     theta = np.random.uniform(0, 1, size=i + 1)
     plt.subplot(a)
     plt.title(f'$\\theta$ = {theta.round(2)}')
-    plt.plot(ma_process(eps, theta))
+    plt.plot(ma_process(eps, theta=theta))
 
 def pearson_correlation(x, y):
     return np.mean((x - x.mean()) * (y - y.mean())) / (x.std() * y.std())
