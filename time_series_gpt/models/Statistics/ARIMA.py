@@ -45,7 +45,7 @@ for i in range(0, 11, 5):
     theta = np.random.uniform(0, 1, size=i + 1)
     plt.subplot(a)
     plt.title(f'$\\theta$ = {theta.round(2)}')
-    plt.plot(ma_process(eps, theta=theta))
+    plt.plot(ma_process(eps, theta))
 
 def pearson_correlation(x, y):
     return np.mean((x - x.mean()) * (y - y.mean())) / (x.std() * y.std())
@@ -192,6 +192,10 @@ def plot_pacf(x, alpha=0.05, lag=40, title=None):
     # Determine confidence interval
     ci = stats.norm.ppf(1 - alpha / 2.) * bartletts_formula(pacf_val, len(x))
     plt.fill_between(np.arange(1, ci.shape[0] + 1), -ci, ci, alpha=0.25)
+
+plot_pacf(ar_process(eps, [0.3, -0.3, 0.5]))
+plot_pacf(ar_process(eps, [0.5, -0.1, 0.1]))
+plot_pacf(ar_process(eps, [0.2, 0.5, 0.1]))
 
 def difference(x, d=1):
     if d == 0:
