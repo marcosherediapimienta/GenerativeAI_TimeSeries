@@ -170,7 +170,7 @@ class LoadingData:
     def __filter_tickers__(self,ticker):
         return ''.join(char if char not in '$.!\|^()@:° ͜ʖ ͡°' else '' for char in ticker)
 
-    def get_data(self, start_date=None, end_date=None)->pd.DataFrame:
+    def get_data(self, start_date=None, end_date=None, interval:str = '1d')->pd.DataFrame:
         """
         The `get_data` function downloads stock data for a list of tickers within a specified date range or
         defaults to the last 10 years if no dates are provided.
@@ -187,6 +187,7 @@ class LoadingData:
         tickers, the method concatenates the data into a single DataFrame, sorts it by date and ticker, and
         returns the combined DataFrame. If no data is downloaded for any ticker, an empty DataFrame is
         returned.
+        :interaval str --> Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
         """
         all_data = []
 
@@ -199,7 +200,7 @@ class LoadingData:
         for ticker in self.tickers:
             print(f"Downloading data for {ticker}...")
             try:
-                data = yf.download(ticker, start=start_date, end=end_date)
+                data = yf.download(ticker, start=start_date, end=end_date, interval= interval)
                 if data.empty:
                     print(f"No data found for {ticker} in YahooFinance.")
                     continue
